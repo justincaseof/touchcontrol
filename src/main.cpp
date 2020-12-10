@@ -108,15 +108,22 @@ void onIRinput() {
     }
 }
 
+/**
+ * Servo MC-410
+ *   --> min-value: ~26
+ *   --> max-value: ~166
+ */
+int SERVO_MIN = 26;
+int SERVO_MAX = 166;
 void servoStuff() {
     // reset?
     if (event) {
-        servo.write(150);
-        delay(250);
-        servo.write(90);
+        servo.write(SERVO_MAX); // this is the maximum
+        delay(800);
+        servo.write(SERVO_MIN);
         event = 0;
     } else {
-      servo.write(90);
+      servo.write(SERVO_MIN);  // this is the servo's "reset" value after poweron
     }
 }
 
