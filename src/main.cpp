@@ -7,7 +7,6 @@
 int LED_blue = LED_BUILTIN; // == D4
 int LED_ON = 0;
 int LED_OFF = 1;
-int run = 0;
 char buf[64];
 
 int RECV_PIN = D3; //an IR detector connected to D3
@@ -16,6 +15,17 @@ decode_results results;
 
 int SERVO_PIN = D1;
 Servo servo;
+/**
+ * Servo MC-410
+ *   --> min-value: ~26
+ *   --> max-value: ~166
+ */
+int SERVO_MIN = 26;
+int SERVO_MAX = 166;
+int SERVO_IDLE = SERVO_MIN;
+int SERVO_PUSH = 60;
+int pushdelay = 140; // minimum delay to make arm travel from 26 to 60 and back
+
 void onIRinput();
 
 void setup() {
@@ -30,6 +40,7 @@ void setup() {
     
 }
 
+/*
 void dump(decode_results *results) {
   // Dumps out the decode_results structure.
   // Call this after IRrecv::decode()
@@ -67,7 +78,6 @@ void dump(decode_results *results) {
   Serial.print(" (");
   Serial.print(results->bits, DEC);
   Serial.println(" bits)");
-  /*
   Serial.print("Raw (");
   Serial.print(count, DEC);
   Serial.print("): {");
@@ -83,8 +93,8 @@ void dump(decode_results *results) {
     }
   }
   Serial.println("};");
-  */
 }
+*/
 
 void irStuff() {
     if (irrecv.decode(&results)) {
@@ -94,7 +104,10 @@ void irStuff() {
     }
 }
 
-int event = 0;
+int EVENT_NONE = 0;
+int EVENT_IR_EVENT_BUTTON_OK = 1;
+int event = EVENT_NONE;
+
 void onIRinput() {
     // FF18E7 --> UP
     // FF4AB5 --> DOWN
@@ -104,29 +117,32 @@ void onIRinput() {
 
     if (results.value == 0xFF38C7) {
         Serial.println("OK");
-        event = 1;
+        event = EVENT_IR_EVENT_BUTTON_OK;
     }
+    if (results.value == 0xFF18E7) {
+        pushdelay += 10;
+    }
+    if (results.value == 0xFF4AB5) {
+        pushdelay -= 10;
+    }
+    sprintf(buf, "# pushdelay=%d", pushdelay);
+    Serial.println(buf);
 }
 
-/**
- * Servo MC-410
- *   --> min-value: ~26
- *   --> max-value: ~166
- */
-int SERVO_MIN = 26;
-int SERVO_MAX = 166;
+
 void servoStuff() {
     // reset?
-    if (event) {
-        servo.write(SERVO_MAX); // this is the maximum
-        delay(800);
-        servo.write(SERVO_MIN);
+    if (event == EVENT_IR_EVENT_BUTTON_OK) {
+        servo.write(SERVO_PUSH); // this is the maximum
+        delay(pushdelay);
+        servo.write(SERVO_IDLE);
         event = 0;
     } else {
-      servo.write(SERVO_MIN);  // this is the servo's "reset" value after poweron
+      servo.write(SERVO_IDLE);  // this is the servo's "reset" value after poweron
     }
 }
 
+/*
 void servoTest() {
   for(int pos = 0; pos < 180; pos += 1) {  // von 0 bis 180 Grad, in Schritten von einem Grad
     servo.write(pos);                   // sagt dem Servomotor, in welche Position sich drehen soll      
@@ -143,16 +159,21 @@ void servoTest() {
     Serial.println(buf);
   }
 }
-
+*/
+int run = 0;
 void loop() {
     servoStuff();
     irStuff();
     //servoTest();
 
-    digitalWrite(LED_blue, LED_ON);
-    delay(50);
-    digitalWrite(LED_blue, LED_OFF);
-    delay(50);
+    if (run++%16 == 0) {
+      digitalWrite(LED_blue, LED_ON);
+      delay(50);
+      digitalWrite(LED_blue, LED_OFF);
+      delay(50);
+    } else {
+      delay(100);
+    }
 }
 
 
