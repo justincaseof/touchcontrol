@@ -94,8 +94,7 @@ void irStuff() {
     }
 }
 
-int angle = 1;
-int active = 0;
+int event = 0;
 void onIRinput() {
     // FF18E7 --> UP
     // FF4AB5 --> DOWN
@@ -105,33 +104,43 @@ void onIRinput() {
 
     if (results.value == 0xFF38C7) {
         Serial.println("OK");
-        active = 2;
+        event = 1;
     }
 }
 
-void servoStuff2() {
+void servoStuff() {
     // reset?
-    if (active > 0) {
-        active--;
-        angle = 150;
-        Serial.println("90");
-
-        // FIRE!
-        servo.write(angle);
+    if (event) {
+        servo.write(150);
+        delay(250);
+        servo.write(90);
+        event = 0;
     } else {
-        angle = 30;
-        Serial.println("reset");
-
-        // FIRE!
-        servo.write(angle);
+      servo.write(90);
     }
+}
 
-    delay(1000);
+void servoTest() {
+  for(int pos = 0; pos < 180; pos += 1) {  // von 0 bis 180 Grad, in Schritten von einem Grad
+    servo.write(pos);                   // sagt dem Servomotor, in welche Position sich drehen soll      
+    delay(150);                            // wartet 15 Millisekunden   
+    
+    sprintf(buf, "#%i", pos);
+    Serial.println(buf);
+  }    
+  for(int pos = 180; pos>=1; pos-=1) {     // und das gleiche zurück
+    servo.write(pos);
+    delay(150);
+
+    sprintf(buf, "#%i", pos);
+    Serial.println(buf);
+  }
 }
 
 void loop() {
-    servoStuff2();
+    servoStuff();
     irStuff();
+    //servoTest();
 
     digitalWrite(LED_blue, LED_ON);
     delay(50);
