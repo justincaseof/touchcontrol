@@ -84,22 +84,18 @@ void dump(decode_results *results) {
   }
   Serial.println("};");
   */
-
-  onIRinput();
 }
 
 void irStuff() {
     if (irrecv.decode(&results)) {
-        Serial.println(">>>>>>");
-
-        dump(&results);
-
+        //dump(&results);
+        onIRinput();      // handle this.
         irrecv.resume(); // Receive the next value
     }
 }
 
-int angle = 0;
-int countdown = 0;
+int angle = 1;
+int active = 0;
 void onIRinput() {
     // FF18E7 --> UP
     // FF4AB5 --> DOWN
@@ -107,62 +103,40 @@ void onIRinput() {
     // FF5AA5 --> RIGHT
     // FF38C7 --> OK
 
-    if (results.value == 0xFF18E7) {
-        Serial.println("UP");
-        angle += 10;
-    } else if (results.value == 0xFF4AB5) {
-        Serial.println("DOWN");
-        angle -= 10;
-    } else if (results.value == 0xFF10EF) {
-        Serial.println("LEFT");
-        angle = 0;
-    } else if (results.value == 0xFF5AA5) {
-        Serial.println("RIGHT");
-        angle = 180;
-    } else if (results.value == 0xFF38C7) {
+    if (results.value == 0xFF38C7) {
         Serial.println("OK");
-        angle = 90;
-        countdown = 1;
+        active = 2;
     }
 }
 
-void servoStuff() {
+void servoStuff2() {
     // reset?
-    if (countdown == 1) {
-        angle -= 5;
-        if (angle < 1) {
-          // stop countdown
-          countdown = 0;
-        }
+    if (active > 0) {
+        active--;
+        angle = 150;
+        Serial.println("90");
+
+        // FIRE!
+        servo.write(angle);
+    } else {
+        angle = 30;
+        Serial.println("reset");
+
+        // FIRE!
+        servo.write(angle);
     }
-    
-    // sanity
-    if (angle < 0) {
-        angle = 0;
-    }
-    if (angle > 180) {
-        angle = 180;
-    }
-    // FIRE!
-    servo.write(angle);
-    // LOG
-    sprintf(buf, "# angle=%d", angle);
-    Serial.println(buf);
+
+    delay(1000);
 }
 
 void loop() {
-    while(1) {
-        //sprintf(buf, "#%i", run++);
-        //Serial.println(buf);
+    servoStuff2();
+    irStuff();
 
-        irStuff();
-        servoStuff();
-
-        digitalWrite(LED_blue, LED_ON);
-        delay(100);
-        digitalWrite(LED_blue, LED_OFF);
-        delay(100);
-    }
+    digitalWrite(LED_blue, LED_ON);
+    delay(50);
+    digitalWrite(LED_blue, LED_OFF);
+    delay(50);
 }
 
 
