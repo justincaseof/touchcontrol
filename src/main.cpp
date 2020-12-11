@@ -118,14 +118,29 @@ void onIRinput() {
     if (results.value == 0xFF38C7) {
         Serial.println("OK");
         event = EVENT_IR_EVENT_BUTTON_OK;
-    }
-    if (results.value == 0xFF18E7) {
+    } else if (results.value == 0xFF18E7) {
         pushdelay += 10;
-    }
-    if (results.value == 0xFF4AB5) {
+    } else if (results.value == 0xFF4AB5) {
         pushdelay -= 10;
+    } else if (results.value == 0xFF5AA5) {
+        SERVO_PUSH += 10;
+    } else if (results.value == 0xFF10EF) {
+        SERVO_PUSH -= 10;
     }
-    sprintf(buf, "# pushdelay=%d", pushdelay);
+    
+    // verify
+    if (pushdelay < 10) {
+      pushdelay = 10;
+    }
+    if (SERVO_PUSH < SERVO_IDLE) {
+      SERVO_PUSH = SERVO_IDLE;
+    }
+    if (SERVO_PUSH > SERVO_MAX) {
+      SERVO_PUSH = SERVO_MAX;
+    }
+
+    // log
+    sprintf(buf, "# pushdelay=%d, pushpos=%d", pushdelay, SERVO_PUSH);
     Serial.println(buf);
 }
 
