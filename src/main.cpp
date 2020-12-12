@@ -22,9 +22,10 @@ Servo servo;
  */
 int SERVO_MIN = 26;
 int SERVO_MAX = 166;
-int SERVO_IDLE = SERVO_MIN;
-int SERVO_PUSH = 60;
-int pushdelay = 140; // minimum delay to make arm travel from 26 to 60 and back
+
+int SERVO_IDLE = SERVO_MAX - 6;
+int servo_angle_pos = SERVO_MIN;
+int pushdelay = 450; // minimum delay to make arm travel from 26 to 60 and back
 
 void onIRinput();
 
@@ -37,6 +38,7 @@ void setup() {
 
     // Servo
     servo.attach(SERVO_PIN);
+    servo.write(SERVO_IDLE);  // zero-pos
     
 }
 
@@ -123,24 +125,24 @@ void onIRinput() {
     } else if (results.value == 0xFF4AB5) {
         pushdelay -= 10;
     } else if (results.value == 0xFF5AA5) {
-        SERVO_PUSH += 10;
+        servo_angle_pos += 10;
     } else if (results.value == 0xFF10EF) {
-        SERVO_PUSH -= 10;
+        servo_angle_pos -= 10;
     }
     
     // verify
     if (pushdelay < 10) {
       pushdelay = 10;
     }
-    if (SERVO_PUSH < SERVO_IDLE) {
-      SERVO_PUSH = SERVO_IDLE;
+    if (servo_angle_pos < SERVO_MIN) {
+      servo_angle_pos = SERVO_MIN;
     }
-    if (SERVO_PUSH > SERVO_MAX) {
-      SERVO_PUSH = SERVO_MAX;
+    if (servo_angle_pos > SERVO_MAX) {
+      servo_angle_pos = SERVO_MAX;
     }
 
     // log
-    sprintf(buf, "# pushdelay=%d, pushpos=%d", pushdelay, SERVO_PUSH);
+    sprintf(buf, "# pushdelay=%d, pushpos=%d", pushdelay, servo_angle_pos);
     Serial.println(buf);
 }
 
@@ -148,10 +150,10 @@ void onIRinput() {
 void servoStuff() {
     // reset?
     if (event == EVENT_IR_EVENT_BUTTON_OK) {
-        servo.write(SERVO_PUSH); // this is the maximum
+        servo.write(servo_angle_pos); // this is the maximum
         delay(pushdelay);
         servo.write(SERVO_IDLE);
-        event = 0;
+        event = 0;  // reset event
     } else {
       servo.write(SERVO_IDLE);  // this is the servo's "reset" value after poweron
     }
