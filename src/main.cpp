@@ -128,6 +128,9 @@ void onIRinput() {
         servo_angle_targetpos += 10;
     } else if (results.value == 0xFF10EF) {
         servo_angle_targetpos -= 10;
+    } else {
+        sprintf(buf, "! unknown IR cmd: 0x%08x", (uint)results.value);
+        Serial.println(buf);
     }
     
     // verify
