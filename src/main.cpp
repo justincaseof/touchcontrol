@@ -160,12 +160,16 @@ void servo_driveToTarget() {
 
     int servo_pos_intermediate = SERVO_IDLE;  // we're at 166 now; servo_angle_targetpos = 42
     int decrement = 1;
+    int run = 0;
     while (servo_pos_intermediate > servo_angle_targetpos) {
 
         if (servo_pos_intermediate > 140) {
             servo_pos_intermediate -= decrement;
         } else if (servo_pos_intermediate > 68) {
-            servo_pos_intermediate -= decrement++;
+            servo_pos_intermediate -= decrement;
+            if (run++ % 2 == 0) {
+                decrement++;
+            }
         } else {
             servo_pos_intermediate -= decrement--;
         }
