@@ -20,12 +20,12 @@ Servo servo;
  *   --> min-value: ~26
  *   --> max-value: ~166
  */
-int SERVO_MIN = 26;
+int SERVO_MIN = 42;
 int SERVO_MAX = 166;
 
 int SERVO_IDLE = SERVO_MAX - 6;
-int servo_angle_pos = SERVO_MIN;
-int pushdelay = 450; // minimum delay to make arm travel from 26 to 60 and back
+int servo_angle_targetpos = SERVO_MIN;
+int pushdelay = 1000; // minimum delay to make arm travel from 26 to 60 and back
 
 void onIRinput();
 
@@ -125,37 +125,63 @@ void onIRinput() {
     } else if (results.value == 0xFF4AB5) {
         pushdelay -= 10;
     } else if (results.value == 0xFF5AA5) {
-        servo_angle_pos += 10;
+        servo_angle_targetpos += 10;
     } else if (results.value == 0xFF10EF) {
-        servo_angle_pos -= 10;
+        servo_angle_targetpos -= 10;
     }
     
     // verify
     if (pushdelay < 10) {
       pushdelay = 10;
     }
-    if (servo_angle_pos < SERVO_MIN) {
-      servo_angle_pos = SERVO_MIN;
+    if (servo_angle_targetpos < SERVO_MIN) {
+      servo_angle_targetpos = SERVO_MIN;
     }
-    if (servo_angle_pos > SERVO_MAX) {
-      servo_angle_pos = SERVO_MAX;
+    if (servo_angle_targetpos > SERVO_MAX) {
+      servo_angle_targetpos = SERVO_MAX;
     }
 
     // log
-    sprintf(buf, "# pushdelay=%d, pushpos=%d", pushdelay, servo_angle_pos);
+    sprintf(buf, "# pushdelay=%d, pushpos=%d", pushdelay, servo_angle_targetpos);
     Serial.println(buf);
 }
 
+void servo_driveToTarget() {
+    // v1) directly set target angle
+    servo.write(servo_angle_targetpos);
+
+/*
+    // v2) slowly drive to target angle
+    int servo_pos_intermediate = SERVO_IDLE;
+    int diff = servo_pos_intermediate - servo_angle_targetpos;
+    int increments = 5;
+    while (servo_pos_intermediate > servo_angle_targetpos) {
+        if (servo_pos_intermediate - servo_angle_targetpos < 20 || servo_pos_intermediate - servo_angle_targetpos > 114) {
+            servo_pos_intermediate -= 5;
+        } else {
+            servo_pos_intermediate -= 15;
+        }
+        servo.write(servo_pos_intermediate);
+
+        delay(10);
+    }
+    */
+}
+
+void servo_driveToIdle() {
+    // v1) directly set target angle
+    servo.write(SERVO_IDLE);
+}
 
 void servoStuff() {
     // reset?
     if (event == EVENT_IR_EVENT_BUTTON_OK) {
-        servo.write(servo_angle_pos); // this is the maximum
+        servo_driveToTarget();
         delay(pushdelay);
-        servo.write(SERVO_IDLE);
+        servo_driveToIdle();
         event = 0;  // reset event
     } else {
-      servo.write(SERVO_IDLE);  // this is the servo's "reset" value after poweron
+        servo_driveToIdle();
     }
 }
 
