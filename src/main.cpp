@@ -25,7 +25,7 @@ int SERVO_MAX = 166;
 
 int SERVO_IDLE = SERVO_MAX - 6;
 int servo_angle_targetpos = SERVO_MIN;
-int pushdelay = 1000; // minimum delay to make arm travel from 26 to 60 and back
+int pushdelay = 600; // minimum delay to make arm travel from 26 to 60 and back
 
 void onIRinput();
 
@@ -148,29 +148,53 @@ void onIRinput() {
 
 void servo_driveToTarget() {
     // v1) directly set target angle
-    servo.write(servo_angle_targetpos);
+//    servo.write(servo_angle_targetpos);
 
-/*
+
     // v2) slowly drive to target angle
-    int servo_pos_intermediate = SERVO_IDLE;
-    int diff = servo_pos_intermediate - servo_angle_targetpos;
-    int increments = 5;
-    while (servo_pos_intermediate > servo_angle_targetpos) {
-        if (servo_pos_intermediate - servo_angle_targetpos < 20 || servo_pos_intermediate - servo_angle_targetpos > 114) {
-            servo_pos_intermediate -= 5;
-        } else {
-            servo_pos_intermediate -= 15;
-        }
-        servo.write(servo_pos_intermediate);
+    // we're driving from 42..166 (=124 deg)
+    // the first 25 deg is acceleration; the last is deceleration
+    // -->  42.. 67 (25)
+    // -->  68..140 (72)
+    // --> 141..166 (25)
 
+    int servo_pos_intermediate = SERVO_IDLE;  // we're at 166 now; servo_angle_targetpos = 42
+    int decrement = 1;
+    while (servo_pos_intermediate > servo_angle_targetpos) {
+
+        if (servo_pos_intermediate > 140) {
+            servo_pos_intermediate -= decrement;
+        } else if (servo_pos_intermediate > 68) {
+            servo_pos_intermediate -= decrement++;
+        } else {
+            servo_pos_intermediate -= decrement--;
+        }
+
+        servo.write(servo_pos_intermediate);
         delay(10);
     }
-    */
+
 }
 
 void servo_driveToIdle() {
     // v1) directly set target angle
-    servo.write(SERVO_IDLE);
+//    servo.write(SERVO_IDLE);
+
+
+    // v2) slowly drive to target angle
+    // we're driving from 42..166 (=124 deg)
+    // the first 25 deg is acceleration; the last is deceleration
+    // -->  42.. 67 (25)
+    // -->  68..140 (72)
+    // --> 141..166 (25)
+
+    int servo_pos_intermediate = servo_angle_targetpos;  // we're at 42 now; SERVO_IDLE = 166
+    int increment = 1;
+    while (servo_pos_intermediate < SERVO_IDLE) {
+        servo_pos_intermediate += increment;
+        servo.write(servo_pos_intermediate);
+        delay(10);
+    }
 }
 
 void servoStuff() {
@@ -181,7 +205,7 @@ void servoStuff() {
         servo_driveToIdle();
         event = 0;  // reset event
     } else {
-        servo_driveToIdle();
+        //servo_driveToIdle();
     }
 }
 
