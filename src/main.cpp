@@ -101,8 +101,10 @@ void dump(decode_results *results) {
 void irStuff() {
     if (irrecv.decode(&results)) {
         //dump(&results);
-        onIRinput();      // handle this.
-        irrecv.resume(); // Receive the next value
+        if (event == EVENT_NONE) {  // do not handle when we already have an event
+            onIRinput();      // handle this.
+            irrecv.resume(); // Receive the next value
+        }
     }
 }
 
@@ -117,7 +119,14 @@ void onIRinput() {
     // FF5AA5 --> RIGHT
     // FF38C7 --> OK
 
-    if (results.value == 0xFF38C7) {
+    if (results.value == 0xFF38C7 ||    // OK on cheap china remote
+        results.value == 0x00000028 ||  // fast forward (FFW) on philips remote
+        //results.value == 0x00010028 ||  // fast forward (FFW) on philips remote
+        results.value == 0x0000002B ||  // fast backward (FBW) on philips remote
+        //results.value == 0x0001002B ||  // fast backward (FBW) on philips remote
+        results.value == 0x00000031 ||  // STOP on philips remote
+        //results.value == 0x00010031     // STOP on philips remote
+    ) {
         Serial.println("OK");
         event = EVENT_IR_EVENT_BUTTON_OK;
     } else if (results.value == 0xFF18E7) {
