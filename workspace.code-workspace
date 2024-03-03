@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "annett-soundonoff",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.tcc": "cpp",
+			"istream": "cpp",
+			"ostream": "cpp",
+			"typeinfo": "cpp"
+		}
+	}
+}
