@@ -98,6 +98,11 @@ void dump(decode_results *results) {
 }
 */
 
+
+int EVENT_NONE = 0;
+int EVENT_IR_EVENT_BUTTON_OK = 1;
+int event = EVENT_NONE;
+
 void irStuff() {
     if (irrecv.decode(&results)) {
         //dump(&results);
@@ -107,10 +112,6 @@ void irStuff() {
         }
     }
 }
-
-int EVENT_NONE = 0;
-int EVENT_IR_EVENT_BUTTON_OK = 1;
-int event = EVENT_NONE;
 
 void onIRinput() {
     // FF18E7 --> UP
@@ -124,7 +125,7 @@ void onIRinput() {
         //results.value == 0x00010028 ||  // fast forward (FFW) on philips remote
         results.value == 0x0000002B ||  // fast backward (FBW) on philips remote
         //results.value == 0x0001002B ||  // fast backward (FBW) on philips remote
-        results.value == 0x00000031 ||  // STOP on philips remote
+        results.value == 0x00000031   // STOP on philips remote
         //results.value == 0x00010031     // STOP on philips remote
     ) {
         Serial.println("OK");
